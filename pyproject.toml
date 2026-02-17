@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "package1"
+name = "custom_tools"
 version = "0.1.0"
-description = "A simple practice package for my functions"
+description = "A package for my custom functions"
 readme = "README.md"
 requires-python = ">=3.7"
 dependencies = [] # Add external libraries like 'requests' here

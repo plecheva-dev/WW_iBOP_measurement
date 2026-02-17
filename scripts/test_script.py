@@ -1,5 +1,7 @@
 print("hello")
 
-import helper_functions as hf
+from custom_tools import cheer, greet, clap
 
-hf.dummy_helper_function()
+cheer("Pierre")
+clap()
+greet()
