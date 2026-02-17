@@ -1,0 +1,3 @@
+Notebooks should have a clear title and a data
+They should contain combinations of data visualizations and text.
+They should have a clear structure and comments/discussions.

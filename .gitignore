@@ -1,0 +1,13 @@
+*.code-workspace
+
+__pycache__/
+*.py[cod] 
+.vscode/
+.venv/
+*.egg-info/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Data
+/data
