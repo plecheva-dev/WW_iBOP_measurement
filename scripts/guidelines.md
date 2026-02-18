@@ -1,5 +1,6 @@
-Scripts use functions from the custom package, load data, and 
-produce results that are exported into the data folder.
+Scripts use functions from the custom package, load data, and produce results that are exported into the data folder.
+
+They should be run from the main terminal, not in a dedicated terminal. 
 
 It should contain: 
 
