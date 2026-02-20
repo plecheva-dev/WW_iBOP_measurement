@@ -1,6 +1,6 @@
 from custom_tools.acs_data_reader import get_acs_IOP
 from custom_tools.acs_outlier_detection_functions import detect_outlier_spectrum_575nm
-from custom_tools.acs_outlier_detection_functions import detect_outlier_spectrum_max_value
+from custom_tools.acs_outlier_detection_functions import _detect_outlier_spectrum_max_value
 from custom_tools.acs_outlier_detection_functions import iterative_clean_mean_spectra
 import pandas as pd
 import numpy as np
@@ -30,8 +30,8 @@ def main():
         df_arr_A = df_arr_A[~df_arr_A.apply(detect_outlier_spectrum_575nm, axis=1)]
         df_arr_C = df_arr_C[~df_arr_C.apply(detect_outlier_spectrum_575nm, axis=1)]
 
-        df_arr_A = df_arr_A[~df_arr_A.apply(detect_outlier_spectrum_max_value, axis=1)]
-        df_arr_C = df_arr_C[~df_arr_C.apply(detect_outlier_spectrum_max_value, axis=1)]
+        df_arr_A = df_arr_A[~df_arr_A.apply(_detect_outlier_spectrum_max_value, axis=1)]
+        df_arr_C = df_arr_C[~df_arr_C.apply(_detect_outlier_spectrum_max_value, axis=1)]
 
         spectra_A = df_arr_A.iloc[:, 1:].to_numpy()
         spectra_C = df_arr_C.iloc[:, 1:].to_numpy()
