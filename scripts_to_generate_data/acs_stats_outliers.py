@@ -1,13 +1,58 @@
-# %%
 from custom_tools.acs_data_reader import get_acs_IOP
 from custom_tools.acs_outlier_detection_functions import run_spectra_cleaning_pipeline
 import numpy as np
 import pandas as pd
+from pathlib import Path
 import os
 import seaborn as sns
 import matplotlib.pyplot as plt
 import warnings
 warnings.filterwarnings("ignore")
+
+def analyze_clean_spectra(clean_sp, samplename):
+    mean_sp, std_sp = np.mean(clean_sp, axis=0), np.std(clean_sp, axis=0)
+    n_valid_sp = len(clean_sp)
+    mean_mean = np.mean(mean_sp)
+    mean_std = np.mean(std_sp)
+    
+    return {
+            "sample": samplename,
+            "n_valid_spectra": n_valid_sp,
+            "mean_mean": mean_mean, 
+            "mean_std": mean_std,
+            "rel_std": 100*mean_std/mean_mean
+        }
+
+def _test_if_visual_inspection_is_needed(analysis_dict):
+    n = analysis_dict["n_valid_spectra"]
+    rel_std = analysis_dict["rel_std"]
+    mean_std = analysis_dict["mean_std"] # Ensure this matches your dict key
+
+    # Condition 1: Sample size is too small
+    if n < 20:
+        return True
+    
+    # Condition 2: High relative noise AND significant absolute noise
+    if n >= 20:
+        if rel_std > 5 and mean_std > 1:
+            return True
+    
+    # Otherwise, it's considered a valid/clean sample
+    return False
+
+def savefig_in_correct_folder(fig, samplename, f, analysis_dict, sampletype):
+    need_visual_inspection = _test_if_visual_inspection_is_needed(analysis_dict)
+    
+    if need_visual_inspection:
+        output_dir = Path("data/plots/2026-02-25_acs_sample_single_plots_classified/visual inspection needed")
+    else: 
+        output_dir = Path("data/plots/2026-02-25_acs_sample_single_plots_classified/valid")
+
+    # Create the directory (and any missing parent folders)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Now save your plot
+    fig.savefig(output_dir / f"{f}_{samplename}_relSTD={analysis_dict['rel_std']:.1f}_{sampletype}.png")
 
 dir_path = "data/raw/1_acs_runs/runs"
 
@@ -30,38 +75,27 @@ for f in file_list:
             wav_S = np.array(df_arr_S.columns[1:].astype(float))
            
             # 1. Generate the figures (they are stored in Matplotlib's internal memory)
-            clean_A, _ = run_spectra_cleaning_pipeline(df_arr_A, wav_A, threshold_575=0.05, plot=False)
-            mA, sA = np.mean(clean_A, axis=0), np.std(clean_A, axis=0)
-            saved_data_a.append(
-                {
-                    "sample": samplename,
-                    "n_valid_spectra": len(clean_A),
-                    "mean_val": np.mean(mA), 
-                    "mean_std": np.mean(sA)
-                }
-            )
+            clean_A, fig_A = run_spectra_cleaning_pipeline(df_arr_A, wav_A, threshold_575=0.05)
+            analyzis_clean_A = analyze_clean_spectra(clean_A, samplename)
+            saved_data_a.append(analyzis_clean_A)
             
+            savefig_in_correct_folder(fig_A, samplename, f, analyzis_clean_A, sampletype="A")
+                    
+            clean_S, fig_S = run_spectra_cleaning_pipeline(df_arr_S, wav_S, threshold_575=0.05)
+            analyzis_clean_S = analyze_clean_spectra(clean_S, samplename)
+            saved_data_s.append(analyzis_clean_S)
+
+            savefig_in_correct_folder(fig_S, samplename, f, analyzis_clean_S, sampletype="S")
             
-            clean_S, _ = run_spectra_cleaning_pipeline(df_arr_S, wav_S, threshold_575=0.05, plot=False)
-            mS, sS = np.mean(clean_S, axis=0), np.std(clean_S, axis=0)
-            saved_data_s.append(
-                {
-                    "sample": samplename,
-                    "n_valid_spectra": len(clean_S),
-                    "mean_val": np.mean(mS), 
-                    "mean_std": np.mean(sS),
-                }
-            )
+            plt.close('all')
         
-    except:
-        print(f"Failed for: {f}")
+    except Exception as e:
+        print(f"FAILED FOR FILE: {f}")
+        print(f"ERROR TYPE: {type(e).__name__}")
+        print(f"ERROR MESSAGE: {e}")
 
 df_outlier_report_A = pd.DataFrame(saved_data_a)
-df_outlier_report_A["relative_std"] = 100 * df_outlier_report_A["mean_std"] / df_outlier_report_A["mean_val"]
 df_outlier_report_S = pd.DataFrame(saved_data_s)
-df_outlier_report_S["relative_std"] = 100 * df_outlier_report_S["mean_std"] / df_outlier_report_S["mean_val"]
-
-
 
 
 # Set aesthetic style
@@ -80,7 +114,7 @@ ax[0, 0].set_xlabel(r"Number of Valid Spectra ($N_{valid}$)")
 ax[0, 0].set_ylabel(r"Mean Standard Deviation ($m^{-1}$)")
 
 # Right: Relative Std vs N Valid Spectra
-sns.scatterplot(data=df_outlier_report_A, x="n_valid_spectra", y="relative_std", 
+sns.scatterplot(data=df_outlier_report_A, x="n_valid_spectra", y="rel_std", 
                 ax=ax[0, 1], color='tab:blue', s=60)
 ax[0, 1].set_title(r"Absorption: $\sigma_{rel}$ vs. $N_{valid}$", fontsize=14)
 ax[0, 1].set_xlabel(r"Number of Valid Spectra ($N_{valid}$)")
@@ -97,7 +131,7 @@ ax[1, 0].set_xlabel(r"Number of Valid Spectra ($N_{valid}$)")
 ax[1, 0].set_ylabel(r"Mean Standard Deviation ($m^{-1}$)")
 
 # Right: Relative Std vs N Valid Spectra
-sns.scatterplot(data=df_outlier_report_S, x="n_valid_spectra", y="relative_std", 
+sns.scatterplot(data=df_outlier_report_S, x="n_valid_spectra", y="rel_std", 
                 ax=ax[1, 1], color='tab:orange', s=60)
 ax[1, 1].set_title(r"Scattering: $\sigma_{rel}$ vs. $N_{valid}$", fontsize=14)
 ax[1, 1].set_xlabel(r"Number of Valid Spectra ($N_{valid}$)")

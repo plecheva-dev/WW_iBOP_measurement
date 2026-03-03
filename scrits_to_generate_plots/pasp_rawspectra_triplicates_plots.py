@@ -1,3 +1,9 @@
+###
+# This script generates, for each filter measured with the PA absorption spectro, a plot with the triplicate measured.
+# Spectra are already preprocessed, i.e. blank substracted and divided by the filtered volume. 
+# ###
+
+
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
