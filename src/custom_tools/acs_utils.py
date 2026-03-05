@@ -12,7 +12,7 @@ def concatenate_df(df_cumm, df):
     
     return df_cumm
 
-def _convert_run_list_to_string(run_list):
+def convert_run_list_to_string(run_list):
     for (i, r) in enumerate(run_list):
         if r<10:
             run_list[i] = f"00{r}"
@@ -26,7 +26,7 @@ def _convert_run_list_to_string(run_list):
 def get_runs_list_from_samplename_and_metadata(samplename, metadata):
     # Filter rows where sample_name matches, then grab the run_nr column
     runs = metadata.loc[metadata["sample_name"] == samplename, "run_nr"].tolist()
-    runs = _convert_run_list_to_string(runs)
+    runs = convert_run_list_to_string(runs)
     return runs
 
 
